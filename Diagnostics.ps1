@@ -1,5 +1,21 @@
-# Diagnostics Script - Report Only
-Write-Host "--- מתחיל ניתוח מערכת עמוק (מצב אבחון בלבד) ---" -ForegroundColor Cyan
+# Diagnostics Script
+param(
+    [switch]$KillHighMemory,
+    [int]$ThresholdMB = 500
+)
+
+# רשימת תהליכי מערכת מוגנים שלא ייסגרו בשום מצב
+$ProtectedProcesses = @(
+    'system', 'idle', 'svchost', 'lsass', 'winlogon', 'csrss',
+    'smss', 'wininit', 'services', 'explorer', 'dwm',
+    'powershell', 'pwsh', 'taskhostw', 'spoolsv', 'audiodg'
+)
+
+if ($KillHighMemory) {
+    Write-Host "--- מצב סגירת תהליכים כבד-זיכרון (סף: ${ThresholdMB}MB) ---" -ForegroundColor Cyan
+} else {
+    Write-Host "--- מתחיל ניתוח מערכת עמוק (מצב אבחון בלבד) ---" -ForegroundColor Cyan
+}
 
 # FIX 1: חותמת זמן
 Write-Host "תאריך ושעה: $(Get-Date -Format 'dd/MM/yyyy HH:mm:ss')" -ForegroundColor White
@@ -70,3 +86,33 @@ try {
 
 Write-Host "`n--- האבחון הושלם ---" -ForegroundColor Cyan
 Write-Host "שים לב: אם אחוז הניצול ב-RAM מעל 80% או הדיסק מלא מעל 90%, זו כנראה סיבת האיטיות." -ForegroundColor White
+
+# 6. סגירת תהליכים כבדי-זיכרון (רק עם הפרמטר -KillHighMemory)
+if ($KillHighMemory) {
+    Write-Host "`n[6/6] מחפש תהליכים שגוזלים מעל ${ThresholdMB}MB..." -ForegroundColor Red
+
+    $HeavyProcs = Get-Process |
+        Where-Object { ($_.WorkingSet / 1MB) -gt $ThresholdMB -and $_.Name -notin $ProtectedProcesses } |
+        Sort-Object WorkingSet -Descending
+
+    if ($HeavyProcs.Count -eq 0) {
+        Write-Host "לא נמצאו תהליכים מעל הסף. אין מה לסגור." -ForegroundColor Green
+    } else {
+        Write-Host "נמצאו $($HeavyProcs.Count) תהליכים מעל הסף:`n" -ForegroundColor Yellow
+        foreach ($proc in $HeavyProcs) {
+            $ramMB = [Math]::Round($proc.WorkingSet / 1MB, 1)
+            $answer = Read-Host "סגור '$($proc.Name)' (PID $($proc.Id), ${ramMB}MB)? [y/n]"
+            if ($answer -eq 'y') {
+                try {
+                    Stop-Process -Id $proc.Id -Force -ErrorAction Stop
+                    Write-Host "  >> '$($proc.Name)' נסגר בהצלחה." -ForegroundColor Green
+                } catch {
+                    Write-Host "  >> שגיאה בסגירת '$($proc.Name)': $_" -ForegroundColor Red
+                }
+            } else {
+                Write-Host "  >> דילוג על '$($proc.Name)'." -ForegroundColor Gray
+            }
+        }
+    }
+    Write-Host "`n--- סיום מצב סגירת תהליכים ---" -ForegroundColor Cyan
+}
