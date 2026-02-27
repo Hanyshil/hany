@@ -123,7 +123,7 @@ def hdr(ws, row, col, text, bold=True, size=11, color="FFFFFF", bg=COLORS["heade
     cell.font = Font(bold=bold, size=size, color=color,
                      name="David" if any('\u0590' <= c <= '\u05FF' for c in str(text)) else "Calibri")
     cell.fill = PatternFill("solid", fgColor=bg)
-    cell.alignment = Alignment(horizontal=align, vertical="center", wrap_text=wrap, reading_order=2)
+    cell.alignment = Alignment(horizontal=align, vertical="center", wrap_text=wrap)
     cell.border = make_border()
     if merge_to:
         ws.merge_cells(start_row=row, start_column=col, end_row=row, end_column=merge_to)
@@ -135,7 +135,7 @@ def cell(ws, row, col, text, bold=False, size=10, color="000000", bg=COLORS["whi
     c.font = Font(bold=bold, size=size, color=color,
                   name="David" if any('\u0590' <= c <= '\u05FF' for c in str(text)) else "Calibri")
     c.fill = PatternFill("solid", fgColor=bg)
-    c.alignment = Alignment(horizontal=align, vertical="center", wrap_text=wrap, reading_order=2)
+    c.alignment = Alignment(horizontal=align, vertical="center", wrap_text=wrap)
     if border:
         c.border = make_border()
     return c
@@ -310,7 +310,7 @@ for title, body, bg in notes:
     c = ws1.cell(row=row, column=2, value=body)
     c.font = Font(size=9, name="David")
     c.fill = PatternFill("solid", fgColor=bg)
-    c.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True, reading_order=2)
+    c.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
     c.border = make_border()
     ws1.merge_cells(start_row=row, start_column=2, end_row=row, end_column=9)
     row += 1
@@ -756,7 +756,7 @@ for q_code, q_text in proposed_qs:
     c = ws5.cell(row=row, column=2, value=q_text)
     c.font = Font(size=10, name="David")
     c.fill = PatternFill("solid", fgColor="E8EAF6")
-    c.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True, reading_order=2)
+    c.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
     c.border = make_border()
     ws5.merge_cells(start_row=row, start_column=2, end_row=row, end_column=5)
     row += 1
